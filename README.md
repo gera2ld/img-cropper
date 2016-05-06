@@ -21,7 +21,7 @@ const ImageCropper = require('img-cropper');
 
 const cropper = ImageCropper.create({
   container: document.getElementById('cropper'),
-  onClip: canvas => {
+  onCrop: canvas => {
     canvasPreview.getContext('2d').drawImage(canvas, 0, 0, 200, 200);
   },
 });
@@ -43,6 +43,6 @@ Documents
 
   * ratio: *Optional* The `width / height` ratio, default as `1`.
 
-  * onClip: *Optional* Function called with a canvas when cropped image is updated.
+  * onCrop: *Optional* Function called with a canvas when cropped image is updated.
 
-  * debounce: *Optional* A number to debounce the `onClip` call.
+  * debounce: *Optional* A number of time in milliseconds to debounce the `onCrop` call.
