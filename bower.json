@@ -1,0 +1,22 @@
+{
+  "name": "img-cropper",
+  "description": "Image cropper based on canvas.",
+  "main": "index.js",
+  "authors": [
+    "Gerald <i@gerald.top>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "image",
+    "crop",
+    "canvas"
+  ],
+  "homepage": "https://github.com/gera2ld/img-cropper",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

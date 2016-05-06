@@ -1,0 +1,21 @@
+{
+  "name": "img-cropper",
+  "version": "0.0.0",
+  "description": "Image cropper based on canvas.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gera2ld/img-cropper.git"
+  },
+  "keywords": [
+    "image",
+    "crop",
+    "canvas"
+  ],
+  "author": "Gerald <i@gerald.top>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gera2ld/img-cropper/issues"
+  },
+  "homepage": "https://github.com/gera2ld/img-cropper#readme"
+}
