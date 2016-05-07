@@ -77,7 +77,7 @@
     container.innerHTML = '<div></div>';
     var wrap = _this.wrap = container.firstElementChild;
     wrap.className = 'clipper';
-    if (options.className) _this.wrap.className += ' ' + options.className;
+    if (options.className) wrap.className += ' ' + options.className;
     _this.canvasSource = document.createElement('canvas');
     var canvasMask = _this.canvasMask = document.createElement('canvas');
     var canvasRect = _this.canvasRect = document.createElement('canvas');
@@ -187,6 +187,7 @@
     _this.onCrop();
   };
   ImageCropper.prototype.onStartSEResize = function (e) {
+    e.preventDefault();
     var _this = this;
     if (_this.mouseData) return;
     var containerRect = _this.wrap.getBoundingClientRect();
@@ -194,8 +195,8 @@
       x0: containerRect.left,
       y0: containerRect.top,
     };
-    _this.wrap.addEventListener('mousemove', _this.onSEResize);
-    _this.wrap.addEventListener('mouseup', _this.onStopSEResize);
+    document.addEventListener('mousemove', _this.onSEResize);
+    document.addEventListener('mouseup', _this.onStopSEResize);
   };
   ImageCropper.prototype.onSEResize = function (e) {
     var _this = this;
@@ -220,19 +221,20 @@
   };
   ImageCropper.prototype.onStopSEResize = function (e) {
     var _this = this;
-    _this.wrap.removeEventListener('mousemove', _this.onSEResize, false);
-    _this.wrap.removeEventListener('mouseup', _this.onStopSEResize, false);
+    document.removeEventListener('mousemove', _this.onSEResize, false);
+    document.removeEventListener('mouseup', _this.onStopSEResize, false);
     _this.mouseData = null;
   };
   ImageCropper.prototype.onStartMove = function (e) {
+    e.preventDefault();
     var _this = this;
     if (_this.mouseData) return;
     _this.mouseData = {
       x0: e.clientX - _this.clipX,
       y0: e.clientY - _this.clipY,
     };
-    _this.wrap.addEventListener('mousemove', _this.onMove, false);
-    _this.wrap.addEventListener('mouseup', _this.onStopMove, false);
+    document.addEventListener('mousemove', _this.onMove, false);
+    document.addEventListener('mouseup', _this.onStopMove, false);
   };
   ImageCropper.prototype.onMove = function (e) {
     var _this = this;
@@ -248,8 +250,8 @@
   };
   ImageCropper.prototype.onStopMove = function () {
     var _this = this;
-    _this.wrap.removeEventListener('mousemove', _this.onMove, false);
-    _this.wrap.removeEventListener('mouseup', _this.onStopMove, false);
+    document.removeEventListener('mousemove', _this.onMove, false);
+    document.removeEventListener('mouseup', _this.onStopMove, false);
     _this.mouseData = null;
   };
   ImageCropper.prototype.onCrop = function () {

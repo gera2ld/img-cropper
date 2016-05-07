@@ -2,7 +2,10 @@ const preview = document.querySelector('#preview');
 const cropper = ImageCropper.create({
   container: document.querySelector('#cropper'),
   onCrop: canvas => {
-    preview.getContext('2d').drawImage(canvas, 0, 0, 200, 200);
+    const ctx = preview.getContext('2d');
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, 200, 200);
+    ctx.drawImage(canvas, 0, 0, 200, 200);
   },
 });
 document.querySelector('input[type=file]').addEventListener('change', e => {
