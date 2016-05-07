@@ -99,8 +99,8 @@
   ImageCropper.styles = (
     '.clipper{position:absolute;overflow:visible;}'
     + '.clipper-area{position:absolute;}'
-    + '.clipper-rect{position:absolute;border:1px dashed;cursor:move;box-sizing:border-box;}'
-    + '.clipper-corner{position:absolute;width:10px;height:10px;bottom:-5px;right:-5px;background:rgba(0,0,0,.1);border:1px solid rgba(255,255,255,.8);cursor:se-resize;}'
+    + '.clipper-rect{position:absolute;border:1px solid rgba(255,255,255,.5);cursor:move;box-sizing:border-box;}'
+    + '.clipper-corner{position:absolute;width:10px;height:10px;bottom:-5px;right:-5px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.5);cursor:se-resize;box-sizing:border-box;}'
   );
   /**
    * @desc Reset clipper by setting an image.
