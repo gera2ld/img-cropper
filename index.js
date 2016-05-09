@@ -10,7 +10,7 @@
     var height = ~~ (data.maxWidth / ratio);
     if (height > data.maxHeight) {
       height = data.maxHeight;
-      width = ~~ (data.maxHeight / ratio);
+      width = ~~ (data.maxHeight * ratio);
     }
     return {
       width: width,
