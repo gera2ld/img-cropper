@@ -1,13 +1,20 @@
-const preview = document.querySelector('#preview');
+const $ = selector => document.querySelector(selector);
+const preview = $('#preview');
+var ratio = 1;
 const cropper = ImageCropper.create({
-  container: document.querySelector('#cropper'),
+  container: $('#cropper'),
   onCrop: canvas => {
     const ctx = preview.getContext('2d');
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, 200, 200);
     ctx.drawImage(canvas, 0, 0, 200, 200);
+    ratio = canvas.width / canvas.height;
   },
+  ratio,
 });
-document.querySelector('input[type=file]').addEventListener('change', e => {
+$('input[type=file]').addEventListener('change', e => {
   cropper.reset(e.target.files[0]);
+}, false);
+$('input[type=checkbox]').addEventListener('change', e => {
+  cropper.setRatio(e.target.checked ? ratio : 0);
 }, false);

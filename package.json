@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/gera2ld/img-cropper/issues"
   },
-  "homepage": "https://github.com/gera2ld/img-cropper#readme"
+  "homepage": "https://github.com/gera2ld/img-cropper#readme",
+  "devDependencies": {
+    "eslint": "^2.11.0"
+  }
 }
