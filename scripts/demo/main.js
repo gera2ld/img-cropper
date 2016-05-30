@@ -7,6 +7,7 @@ const cropper = ImageCropper.create({
     ctx.fillRect(0, 0, 200, 200);
     ctx.drawImage(canvas, 0, 0, 200, 200);
   },
+  ratio: 0,
 });
 document.querySelector('input[type=file]').addEventListener('change', e => {
   cropper.reset(e.target.files[0]);

@@ -7,7 +7,7 @@
 }(typeof window !== 'undefined' ? window : this, function (window) {
   function getRectByRatio(data, ratio) {
     var width = data.maxWidth;
-    var height = ~~ (data.maxWidth / ratio);
+    var height = ratio ? ~~ (data.maxWidth / ratio) : data.maxHeight;
     if (height > data.maxHeight) {
       height = data.maxHeight;
       width = ~~ (data.maxHeight * ratio);
@@ -70,7 +70,7 @@
     _this.options = {};
     for (var k in options) _this.options[k] = options[k];
     options = _this.options;
-    options.ratio = options.ratio || 1;
+    if (options.ratio == null) options.ratio = 1;
     var container = options.container;
     _this.maxWidth = options.width || container.clientWidth;
     _this.maxHeight = options.height || container.clientHeight;
@@ -208,7 +208,7 @@
     var width = x - _this.clipX;
     var height = y - _this.clipY;
     var minHeight = options.minHeight || 5;
-    var minWidth = options.minWidth || minHeight * options.ratio;
+    var minWidth = options.minWidth || minHeight * (options.ratio || 1);
     if (width < minWidth) width = minWidth;
     if (height < minHeight) height = minHeight;
     var data = getRectByRatio({

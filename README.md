@@ -29,9 +29,9 @@ const cropper = ImageCropper.create({
 
 Documents
 ---
-*function* ImageCropper.create(*options*)
+* *function* ImageCropper.create(*options*)
 
-*options* may have attributes below:
+  *options* may have attributes below:
 
   * container: *Required* DOM element to contain the cropper. The cropper will be intialized with the width and height of its container if no `width` and `height` is explicitly defined.
 
@@ -41,7 +41,7 @@ Documents
 
   * minHeight: *Optional* Minimum height of the cropping rect, default as `5`.
 
-  * ratio: *Optional* The `width / height` ratio, default as `1`.
+  * ratio: *Optional* The `width / height` ratio, default as `1`, `0` stands for unlimited.
 
   * onCrop: *Optional* Function called with a canvas when cropped image is updated.
 
