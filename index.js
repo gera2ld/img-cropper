@@ -4,7 +4,7 @@
   } else {
     root.ImageCropper = factory(root);
   }
-}(typeof window !== 'undefined' ? window : this, function (window) {
+}(typeof window !== 'undefined' ? window : this, function () {
   function getRectByRatio(data, ratio) {
     var width = data.maxWidth;
     var height = ratio ? ~~ (data.maxWidth / ratio) : data.maxHeight;
@@ -21,13 +21,6 @@
     for (var k in styles) {
       el.style[k] = styles[k];
     }
-  }
-  function bindAll() {
-    var thisObj = arguments[0];
-    var names = [].slice.call(arguments, 1);
-    names.forEach(function (name) {
-      thisObj[name] = thisObj[name].bind(thisObj);
-    });
   }
   function debounce(func, time) {
     function call() {
@@ -132,14 +125,15 @@
         top: ((maxHeight - fullHeight) >> 1) + 'px',
         left: ((maxWidth - fullWidth) >> 1) + 'px',
       });
+      var ctx;
       canvasSource.width = canvasMask.width = fullWidth;
       canvasSource.height = canvasMask.height = fullHeight;
-      var ctx = canvasSource.getContext('2d');
+      ctx = canvasSource.getContext('2d');
       // In case image has transparent pixels
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, fullWidth, fullHeight);
       ctx.drawImage(image, 0, 0, fullWidth, fullHeight);
-      var ctx = canvasMask.getContext('2d');
+      ctx = canvasMask.getContext('2d');
       ctx.drawImage(canvasSource, 0, 0);
       ctx.fillStyle = 'rgba(0,0,0,.5)';
       ctx.fillRect(0, 0, fullWidth, fullHeight);
@@ -168,7 +162,7 @@
       canvasRect.getContext('2d').drawImage(canvasSource, clipX, clipY, clipWidth, clipHeight, 0, 0, clipWidth, clipHeight);
       onCrop();
     }
-    function onCrop() {
+    function crop() {
       var onCrop = options.onCrop;
       if (onCrop) {
         var sourceX = ~~ (clipX / fullWidth * image.width);
@@ -211,7 +205,7 @@
       clipHeight = data.height;
       updateRect();
     }
-    function onStopSEResize(e) {
+    function onStopSEResize(_e) {
       document.removeEventListener('mousemove', onSEResize, false);
       document.removeEventListener('mouseup', onStopSEResize, false);
       mouseData = null;
@@ -255,12 +249,10 @@
     var canvasSource, canvasMask, canvasRect, canvasClipped;
     var wrap, rect;
     var options = {};
-    var image;
     var clipX, clipY, clipWidth, clipHeight;
-    var sourceX, sourceY, sourceWidth, sourceHeight;
-    var fullWidth, fullHeight;
-    var maxWidth, maxHeight;
-    var mouseData;
+    var fullWidth, fullHeight, maxWidth, maxHeight;
+    var image, mouseData;
+    var onCrop = crop;
 
     init();
     return {
