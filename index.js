@@ -84,6 +84,7 @@
       }, ratio);
       clipWidth = data.width;
       clipHeight = data.height;
+      updateRect();
     }
     /**
      * @desc Reset clipper by setting an image.
