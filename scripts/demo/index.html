@@ -2,11 +2,16 @@
 <html>
   <head>
     <title>Image Cropper</title>
+    <style>
+      #cropper{position:relative;width:600px;height:500px;border:1px solid #eee;}
+      body>div{margin-bottom:10px;}
+    </style>
     <script src="index.js"></script>
   </head>
   <body>
-    <div id="cropper" style="position:relative;width:600px;height:500px;border:1px solid #eee;"></div>
+    <div id="cropper"></div>
     <div><input type="file"></div>
+    <div><label><input type="checkbox" checked>Keep width/height ratio</label></div>
     <canvas id="preview" width=200 height=200></canvas>
     <script src="main.js"></script>
   </body>
