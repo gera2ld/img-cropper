@@ -3,6 +3,9 @@
   "version": "0.1.1",
   "description": "Image cropper based on canvas.",
   "main": "index.js",
+  "scripts": {
+    "eslint": "eslint index.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gera2ld/img-cropper.git"
