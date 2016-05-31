@@ -167,10 +167,19 @@
     function crop() {
       var onCrop = options.onCrop;
       if (onCrop) {
+        var ratio = clipWidth / clipHeight;
         var sourceX = ~~ (clipX / fullWidth * image.width);
         var sourceY = ~~ (clipY / fullHeight * image.height);
-        var sourceWidth = ~~ (clipWidth / fullWidth * image.width);
-        var sourceHeight = ~~ (clipHeight / fullHeight * image.height);
+        var sourceWidth, sourceHeight;
+        // calculate the clipped rect by the smaller side
+        // to avoid inaccuracy when image is largely scaled
+        if (ratio >= 1) {
+          sourceHeight = ~~ (clipHeight / fullHeight * image.height);
+          sourceWidth = ~~ (sourceHeight * ratio);
+        } else {
+          sourceWidth = ~~ (clipWidth / fullWidth * image.width);
+          sourceHeight = ~~ (sourceWidth / ratio);
+        }
         canvasClipped.width = sourceWidth;
         canvasClipped.height = sourceHeight;
         canvasClipped.getContext('2d').drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
