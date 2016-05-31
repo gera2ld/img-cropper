@@ -144,9 +144,10 @@
       }, options.ratio);
       clipWidth = data.width;
       clipHeight = data.height;
+      setRatio(options.ratio);
       clipX = (fullWidth - clipWidth) >> 1;
       clipY = (fullHeight - clipHeight) >> 1;
-      setRatio(options.ratio);
+      updateRect();
     }
     function updateRect() {
       setStyles(rect, {
