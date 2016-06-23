@@ -71,16 +71,20 @@
       wrap.appendChild(canvasMask);
       wrap.appendChild(canvasRect);
       wrap.appendChild(rect);
-      if (options.debounce === 'mouseup') {
-        events.on('SE_RESIZE_END MOVE_END', crop);
-      } else {
-        // If options.debounce is falsy, debounce will ensure only
-        // one crop is processed during one event loop
-        events.on('UPDATE_RECT', debounce(crop, options.debounce));
-      }
+      setDebounce(options.debounce);
       var corner = rect.firstChild;
       corner.addEventListener('mousedown', onStartSEResize, false);
       rect.addEventListener('mousedown', onStartMove, false);
+    }
+    function setDebounce(debounceOption) {
+      cancelDebounce && cancelDebounce();
+      if (debounceOption === 'mouseup') {
+        cancelDebounce = events.on('SE_RESIZE_END MOVE_END', crop);
+      } else {
+        // If debounceOption is falsy, debounce will ensure only
+        // one crop is processed during one event loop
+        cancelDebounce = events.on('UPDATE_RECT', debounce(crop, debounceOption));
+      }
     }
     function setRatio(ratio) {
       if (ratio == null) ratio = 1;
@@ -275,6 +279,9 @@
           if (!list) list = callbacks[type] = [];
           list.push(cb);
         });
+        return function () {
+          off(type, cb);
+        };
       }
       function off(type, cb) {
         forEachType(type, function (type) {
@@ -320,11 +327,13 @@
     var clipX, clipY, clipWidth, clipHeight;
     var fullWidth, fullHeight, maxWidth, maxHeight;
     var image, mouseData;
+    var cancelDebounce;
 
     init();
     return {
       reset: reset,
       setRatio: setRatio,
+      setDebounce: setDebounce,
     };
   }
 
