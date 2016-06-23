@@ -79,7 +79,7 @@
     function setDebounce(debounceOption) {
       cancelDebounce && cancelDebounce();
       if (debounceOption === 'mouseup') {
-        cancelDebounce = events.on('SE_RESIZE_END MOVE_END', crop);
+        cancelDebounce = events.on('CANVAS_INIT SE_RESIZE_END MOVE_END', crop);
       } else {
         // If debounceOption is falsy, debounce will ensure only
         // one crop is processed during one event loop
@@ -159,6 +159,7 @@
       clipX = (fullWidth - clipWidth) >> 1;
       clipY = (fullHeight - clipHeight) >> 1;
       updateRect();
+      events.fire('CANVAS_INIT');
     }
     function updateRect() {
       setStyles(rect, {
