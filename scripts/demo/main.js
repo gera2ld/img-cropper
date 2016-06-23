@@ -3,7 +3,8 @@ const preview = $('#preview');
 var ratio = 1;
 const cropper = ImageCropper.create({
   container: $('#cropper'),
-  onCrop: canvas => {
+  onCrop: cropData => {
+    const canvas = cropData.getCanvas();
     const ctx = preview.getContext('2d');
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, 200, 200);
@@ -15,6 +16,9 @@ const cropper = ImageCropper.create({
 $('input[type=file]').addEventListener('change', e => {
   cropper.reset(e.target.files[0]);
 }, false);
-$('input[type=checkbox]').addEventListener('change', e => {
+$('#cbRatio').addEventListener('change', e => {
   cropper.setRatio(e.target.checked ? ratio : 0);
+}, false);
+$('#cbMouseup').addEventListener('change', e => {
+  cropper.setDebounce(e.target.checked ? 'mouseup' : 0);
 }, false);
