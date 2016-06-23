@@ -4,7 +4,8 @@
   "description": "Image cropper based on canvas.",
   "main": "index.js",
   "scripts": {
-    "eslint": "eslint index.js"
+    "predeploy": "eslint index.js",
+    "deploy": "sh scripts/build-gh.sh"
   },
   "repository": {
     "type": "git",
