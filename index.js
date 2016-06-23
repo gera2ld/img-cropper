@@ -198,8 +198,12 @@
     function crop() {
       var onCrop = options.onCrop;
       if (onCrop) {
+        var canvas;
         onCrop({
-          getCanvas: getCropped,
+          getCanvas: function () {
+            if (!canvas) canvas = getCropped();
+            return canvas;
+          },
         });
       }
     }
