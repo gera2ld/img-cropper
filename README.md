@@ -45,4 +45,4 @@ Documents
 
   * onCrop: *Optional* Function called with a canvas when cropped image is updated.
 
-  * debounce: *Optional* A number of time in milliseconds to debounce the `onCrop` call.
+  * debounce: *Optional* Either `mouseup` or the number of time in milliseconds to debounce the `onCrop` call.

@@ -38,6 +38,7 @@
       timer = setTimeout(call, time);
     }
     var timer;
+    time = time || 0;
     return debouncedCall;
   }
   function initCSS(css) {
@@ -70,7 +71,13 @@
       wrap.appendChild(canvasMask);
       wrap.appendChild(canvasRect);
       wrap.appendChild(rect);
-      if (options.debounce) onCrop = debounce(onCrop, options.debounce);
+      if (options.debounce === 'mouseup') {
+        events.on('SE_RESIZE_END MOVE_END', crop);
+      } else {
+        // If options.debounce is falsy, debounce will ensure only
+        // one crop is processed during one event loop
+        events.on('UPDATE_RECT', debounce(crop, options.debounce));
+      }
       var corner = rect.firstChild;
       corner.addEventListener('mousedown', onStartSEResize, false);
       rect.addEventListener('mousedown', onStartMove, false);
@@ -162,33 +169,39 @@
       canvasRect.height = clipHeight;
       // Draw from canvasSource to avoid image flashing
       canvasRect.getContext('2d').drawImage(canvasSource, clipX, clipY, clipWidth, clipHeight, 0, 0, clipWidth, clipHeight);
-      onCrop();
+      events.fire('UPDATE_RECT');
+    }
+    function getCropped() {
+      var ratio = clipWidth / clipHeight;
+      var sourceX = ~~ (clipX / fullWidth * image.width);
+      var sourceY = ~~ (clipY / fullHeight * image.height);
+      var sourceWidth, sourceHeight;
+      // calculate the clipped rect by the smaller side
+      // to avoid inaccuracy when image is largely scaled
+      if (ratio >= 1) {
+        sourceHeight = ~~ (clipHeight / fullHeight * image.height);
+        sourceWidth = ~~ (sourceHeight * ratio);
+      } else {
+        sourceWidth = ~~ (clipWidth / fullWidth * image.width);
+        sourceHeight = ~~ (sourceWidth / ratio);
+      }
+      canvasClipped.width = sourceWidth;
+      canvasClipped.height = sourceHeight;
+      canvasClipped.getContext('2d').drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+      return canvasClipped;
     }
     function crop() {
       var onCrop = options.onCrop;
       if (onCrop) {
-        var ratio = clipWidth / clipHeight;
-        var sourceX = ~~ (clipX / fullWidth * image.width);
-        var sourceY = ~~ (clipY / fullHeight * image.height);
-        var sourceWidth, sourceHeight;
-        // calculate the clipped rect by the smaller side
-        // to avoid inaccuracy when image is largely scaled
-        if (ratio >= 1) {
-          sourceHeight = ~~ (clipHeight / fullHeight * image.height);
-          sourceWidth = ~~ (sourceHeight * ratio);
-        } else {
-          sourceWidth = ~~ (clipWidth / fullWidth * image.width);
-          sourceHeight = ~~ (sourceWidth / ratio);
-        }
-        canvasClipped.width = sourceWidth;
-        canvasClipped.height = sourceHeight;
-        canvasClipped.getContext('2d').drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
-        onCrop(canvasClipped);
+        onCrop({
+          getCanvas: getCropped,
+        });
       }
     }
     function onStartSEResize(e) {
       e.preventDefault();
       if (mouseData) return;
+      events.fire('SE_RESIZE_START');
       var containerRect = wrap.getBoundingClientRect();
       mouseData = {
         x0: containerRect.left,
@@ -217,6 +230,7 @@
       updateRect();
     }
     function onStopSEResize(_e) {
+      events.fire('SE_RESIZE_END');
       document.removeEventListener('mousemove', onSEResize, false);
       document.removeEventListener('mouseup', onStopSEResize, false);
       mouseData = null;
@@ -224,6 +238,7 @@
     function onStartMove(e) {
       e.preventDefault();
       if (mouseData) return;
+      events.fire('MOVE_START');
       mouseData = {
         x0: e.clientX - clipX,
         y0: e.clientY - clipY,
@@ -243,10 +258,52 @@
       updateRect();
     }
     function onStopMove() {
+      events.fire('MOVE_END');
       document.removeEventListener('mousemove', onMove, false);
       document.removeEventListener('mouseup', onStopMove, false);
       mouseData = null;
     }
+    var events = function () {
+      function forEachType(typeStr, handle) {
+        typeStr.split(' ').forEach(function (type) {
+          type && handle(type);
+        });
+      }
+      function on(type, cb) {
+        forEachType(type, function (type) {
+          var list = callbacks[type];
+          if (!list) list = callbacks[type] = [];
+          list.push(cb);
+        });
+      }
+      function off(type, cb) {
+        forEachType(type, function (type) {
+          var list = callbacks[type];
+          if (list) {
+            if (cb) {
+              var i = list.indexOf(cb);
+              if (~i) list.splice(i, 1);
+            } else {
+              delete callbacks[type];
+            }
+          }
+        });
+      }
+      function fire(type, data) {
+        forEachType(type, function (type) {
+          var list = callbacks[type];
+          list && list.forEach(function (callback) {
+            callback(data, type);
+          });
+        });
+      }
+      var callbacks = {};
+      return {
+        on: on,
+        off: off,
+        fire: fire,
+      };
+    }();
 
     /**
      * canvasSource and canvasMask are scaled to fit container size.
@@ -263,7 +320,6 @@
     var clipX, clipY, clipWidth, clipHeight;
     var fullWidth, fullHeight, maxWidth, maxHeight;
     var image, mouseData;
-    var onCrop = crop;
 
     init();
     return {
