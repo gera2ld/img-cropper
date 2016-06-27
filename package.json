@@ -23,6 +23,6 @@
   },
   "homepage": "https://github.com/gera2ld/img-cropper#readme",
   "devDependencies": {
-    "eslint": "^2.11.0"
+    "eslint": "^2.13.1"
   }
 }

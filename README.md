@@ -43,6 +43,8 @@ Documents
 
   * ratio: *Optional* The `width / height` ratio, default as `1`, `0` stands for unlimited.
 
+  * directions: *Optional* An array of resizer directions, default as `['nw', 'ne', 'sw', 'se']`.
+
   * onCrop: *Optional* Function called with `cropData` when cropped image is updated.
 
-  * debounce: *Optional* Either `mouseup` or the number of time in milliseconds to debounce the `onCrop` call.
+  * debounce: *Optional* Either `'mouseup'` or the number of time in milliseconds to debounce the `onCrop` call.

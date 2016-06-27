@@ -57,29 +57,29 @@
       maxHeight = options.height || container.clientHeight;
       container.innerHTML = '<div></div>';
       wrap = container.firstChild;
-      wrap.className = 'clipper';
+      wrap.className = 'cropper';
       if (options.className) wrap.className += ' ' + options.className;
       canvasSource = document.createElement('canvas');
       canvasMask = document.createElement('canvas');
       canvasRect = document.createElement('canvas');
       canvasClipped = document.createElement('canvas');
-      canvasMask.className = 'clipper-mask';
-      canvasRect.className = 'clipper-area';
+      canvasMask.className = 'cropper-mask';
+      canvasRect.className = 'cropper-area';
       rect = document.createElement('div');
-      rect.className = 'clipper-rect';
-      rect.innerHTML = '<div class="clipper-corner"></div>';
+      rect.className = 'cropper-rect';
+      rect.innerHTML = (options.directions || ['nw', 'ne', 'sw', 'se']).map(function (direction) {
+        return '<div class="cropper-resizer cropper-resizer-' + direction + '"></div>';
+      }).join('');
       wrap.appendChild(canvasMask);
       wrap.appendChild(canvasRect);
       wrap.appendChild(rect);
       setDebounce(options.debounce);
-      var corner = rect.firstChild;
-      corner.addEventListener('mousedown', onStartSEResize, false);
-      rect.addEventListener('mousedown', onStartMove, false);
+      rect.addEventListener('mousedown', onCropStart, false);
     }
     function setDebounce(debounceOption) {
       cancelDebounce && cancelDebounce();
       if (debounceOption === 'mouseup') {
-        cancelDebounce = events.on('CANVAS_INIT SE_RESIZE_END MOVE_END', crop);
+        cancelDebounce = events.on('CANVAS_INIT RESIZE_END MOVE_END', crop);
       } else {
         // If debounceOption is falsy, debounce will ensure only
         // one crop is processed during one event loop
@@ -98,7 +98,7 @@
       updateRect();
     }
     /**
-     * @desc Reset clipper by setting an image.
+     * @desc Reset cropper by setting an image.
      * @param image {Image/Blob}
      */
     function reset(image) {
@@ -108,18 +108,18 @@
         canvas.width = image.width;
         canvas.height = image.height;
         canvas.getContext('2d').drawImage(image, 0, 0);
-        initClipper(canvas.toDataURL());
+        initCropper(canvas.toDataURL());
       } else if (image instanceof Blob) {
         var reader = new FileReader;
         reader.onload = function (e) {
-          initClipper(e.target.result);
+          initCropper(e.target.result);
         };
         reader.readAsDataURL(image);
       } else {
         throw 'Unknown image type!';
       }
     }
-    function initClipper(dataURL) {
+    function initCropper(dataURL) {
       image = new Image;
       image.onload = initCanvas;
       image.src = dataURL;
@@ -198,58 +198,82 @@
     function crop() {
       var onCrop = options.onCrop;
       if (onCrop) {
+        var canvas;
         onCrop({
-          getCanvas: getCropped,
+          getCanvas: function () {
+            if (!canvas) canvas = getCropped();
+            return canvas;
+          },
         });
       }
     }
-    function onStartSEResize(e) {
+    function onCropStart(e) {
       e.preventDefault();
       if (mouseData) return;
-      events.fire('SE_RESIZE_START');
+      events.fire('CROP_START');
+      var matches = e.target.className.match(/cropper-resizer-(\w+)/);
+      if (matches) {
+        onResizeStart(e, matches[1]);
+      } else {
+        onMoveStart(e);
+      }
+    }
+    function onCropEnd(_e) {
+      mouseData = null;
+      events.fire('CROP_END');
+    }
+    function onResizeStart(_e, direction) {
+      events.fire('RESIZE_START');
       var containerRect = wrap.getBoundingClientRect();
       mouseData = {
         x0: containerRect.left,
         y0: containerRect.top,
+        x1: containerRect.right,
+        y1: containerRect.bottom,
+        direction: direction,
       };
-      document.addEventListener('mousemove', onSEResize);
-      document.addEventListener('mouseup', onStopSEResize);
+      document.addEventListener('mousemove', onResize, false);
+      document.addEventListener('mouseup', onResizeEnd, false);
     }
-    function onSEResize(e) {
-      var x = e.clientX - mouseData.x0;
-      var y = e.clientY - mouseData.y0;
-      if (x > fullWidth) x = fullWidth;
-      if (y > fullHeight) y = fullHeight;
-      var width = x - clipX;
-      var height = y - clipY;
+    function onResize(e) {
+      var direction = mouseData.direction;
+      var dirW = ~direction.indexOf('w');
+      var dirN = ~direction.indexOf('n');
       var minHeight = options.minHeight || 5;
       var minWidth = options.minWidth || minHeight * (options.ratio || 1);
-      if (width < minWidth) width = minWidth;
-      if (height < minHeight) height = minHeight;
+      var min = Math.min;
+      var max = Math.max;
+      var x = min(max(e.clientX - mouseData.x0, 0), fullWidth);
+      var y = min(max(e.clientY - mouseData.y0, 0), fullHeight);
+      var width, height;
+      if (dirW) width = max(clipX + clipWidth - x, minWidth);
+      else width = max(x - clipX, minWidth);
+      if (dirN) height = max(clipY + clipHeight - y, minHeight);
+      else height = max(y - clipY, minHeight);
       var data = getRectByRatio({
         maxWidth: width,
         maxHeight: height,
       }, options.ratio);
+      if (dirW) clipX = clipX + clipWidth - data.width;
+      if (dirN) clipY = clipY + clipHeight - data.height;
       clipWidth = data.width;
       clipHeight = data.height;
       updateRect();
     }
-    function onStopSEResize(_e) {
-      events.fire('SE_RESIZE_END');
-      document.removeEventListener('mousemove', onSEResize, false);
-      document.removeEventListener('mouseup', onStopSEResize, false);
-      mouseData = null;
+    function onResizeEnd(e) {
+      document.removeEventListener('mousemove', onResize, false);
+      document.removeEventListener('mouseup', onResizeEnd, false);
+      events.fire('RESIZE_END');
+      onCropEnd(e);
     }
-    function onStartMove(e) {
-      e.preventDefault();
-      if (mouseData) return;
+    function onMoveStart(e) {
       events.fire('MOVE_START');
       mouseData = {
         x0: e.clientX - clipX,
         y0: e.clientY - clipY,
       };
       document.addEventListener('mousemove', onMove, false);
-      document.addEventListener('mouseup', onStopMove, false);
+      document.addEventListener('mouseup', onMoveEnd, false);
     }
     function onMove(e) {
       var x = e.clientX - mouseData.x0;
@@ -262,11 +286,11 @@
       clipY = y;
       updateRect();
     }
-    function onStopMove() {
-      events.fire('MOVE_END');
+    function onMoveEnd(e) {
       document.removeEventListener('mousemove', onMove, false);
-      document.removeEventListener('mouseup', onStopMove, false);
-      mouseData = null;
+      document.removeEventListener('mouseup', onMoveEnd, false);
+      events.fire('MOVE_END');
+      onCropEnd(e);
     }
     var events = function () {
       function forEachType(typeStr, handle) {
@@ -338,12 +362,16 @@
     };
   }
 
-  var defaultCSS = (
-    '.clipper{position:absolute;overflow:visible;}'
-    + '.clipper-area{position:absolute;}'
-    + '.clipper-rect{position:absolute;border:1px solid rgba(255,255,255,.5);cursor:move;box-sizing:border-box;}'
-    + '.clipper-corner{position:absolute;width:10px;height:10px;bottom:-5px;right:-5px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.5);cursor:se-resize;box-sizing:border-box;}'
-  );
+  var defaultCSS = [
+    '.cropper{position:absolute;overflow:visible;}',
+    '.cropper-area{position:absolute;}',
+    '.cropper-rect{position:absolute;border:1px solid rgba(255,255,255,.5);cursor:move;box-sizing:border-box;}',
+    '.cropper-resizer{position:absolute;width:10px;height:10px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.5);box-sizing:border-box;}',
+    '.cropper-resizer-nw{top:-5px;left:-5px;cursor:nw-resize;}',
+    '.cropper-resizer-ne{top:-5px;right:-5px;cursor:ne-resize;}',
+    '.cropper-resizer-sw{bottom:-5px;left:-5px;cursor:sw-resize;}',
+    '.cropper-resizer-se{bottom:-5px;right:-5px;cursor:se-resize;}',
+  ].join('');
   var styles;
 
   return {
