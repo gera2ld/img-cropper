@@ -1,6 +1,6 @@
 {
   "name": "img-cropper",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Image cropper based on canvas.",
   "main": "index.js",
   "scripts": {
