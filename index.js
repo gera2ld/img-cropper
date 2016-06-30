@@ -48,6 +48,14 @@
   }
 
   function create(_options) {
+    function createCanvas(width, height) {
+      // create a canvas and set default width and height as 1px
+      // so that no unexpected scroll bars will appear
+      var canvas = document.createElement('canvas');
+      canvas.width = width || 1;
+      canvas.height = height || 1;
+      return canvas;
+    }
     function init() {
       styles || initCSS();
       for (var k in _options) options[k] = _options[k];
@@ -59,10 +67,10 @@
       wrap = container.firstChild;
       wrap.className = 'cropper';
       if (options.className) wrap.className += ' ' + options.className;
-      canvasSource = document.createElement('canvas');
-      canvasMask = document.createElement('canvas');
-      canvasRect = document.createElement('canvas');
-      canvasClipped = document.createElement('canvas');
+      canvasSource = createCanvas();
+      canvasMask = createCanvas();
+      canvasRect = createCanvas();
+      canvasClipped = createCanvas();
       canvasMask.className = 'cropper-mask';
       canvasRect.className = 'cropper-area';
       rect = document.createElement('div');
@@ -79,7 +87,7 @@
     function setDebounce(debounceOption) {
       cancelDebounce && cancelDebounce();
       if (debounceOption === 'mouseup') {
-        cancelDebounce = events.on('CANVAS_INIT RESIZE_END MOVE_END', crop);
+        cancelDebounce = events.on('CANVAS_INIT CROP_END', crop);
       } else {
         // If debounceOption is falsy, debounce will ensure only
         // one crop is processed during one event loop
@@ -104,9 +112,7 @@
     function reset(image) {
       // Transform image to dataURL to avoid cross-domain issues
       if (image instanceof Image) {
-        var canvas = document.createElement('canvas');
-        canvas.width = image.width;
-        canvas.height = image.height;
+        var canvas = createCanvas(image.width, image.height);
         canvas.getContext('2d').drawImage(image, 0, 0);
         initCropper(canvas.toDataURL());
       } else if (image instanceof Blob) {
