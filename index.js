@@ -63,9 +63,8 @@
       var container = options.container;
       maxWidth = options.width || container.clientWidth;
       maxHeight = options.height || container.clientHeight;
-      container.innerHTML = '<div></div>';
+      container.innerHTML = '<div class="cropper cropper-hide"></div>';
       wrap = container.firstChild;
-      wrap.className = 'cropper';
       if (options.className) wrap.className += ' ' + options.className;
       canvasSource = createCanvas();
       canvasMask = createCanvas();
@@ -111,7 +110,9 @@
      */
     function reset(image) {
       // Transform image to dataURL to avoid cross-domain issues
-      if (image instanceof Image) {
+      if (!image) {
+        wrap.classList.add('cropper-hide');
+      } else if (image instanceof Image) {
         var canvas = createCanvas(image.width, image.height);
         canvas.getContext('2d').drawImage(image, 0, 0);
         initCropper(canvas.toDataURL());
@@ -131,6 +132,7 @@
       image.src = dataURL;
     }
     function initCanvas() {
+      wrap.classList.remove('cropper-hide');
       var data = getRectByRatio({
         maxWidth: maxWidth,
         maxHeight: maxHeight,
@@ -370,6 +372,7 @@
 
   var defaultCSS = [
     '.cropper{position:absolute;overflow:visible;}',
+    '.cropper-hide{display:none;}',
     '.cropper-area{position:absolute;}',
     '.cropper-rect{position:absolute;border:1px solid rgba(255,255,255,.5);cursor:move;box-sizing:border-box;}',
     '.cropper-resizer{position:absolute;width:10px;height:10px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.5);box-sizing:border-box;}',
