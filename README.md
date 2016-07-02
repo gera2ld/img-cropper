@@ -31,20 +31,40 @@ Documents
 ---
 * *function* ImageCropper.create(*options*)
 
-  *options* may have attributes below:
+  *options* have properties below:
 
-  * container: *Required* DOM element to contain the cropper. The cropper will be intialized with the width and height of its container if no `width` and `height` is explicitly defined.
+  * container: *Required*
 
-  * width: *Optional* Maximum width of the cropper. If not defined, `container.clientWidth` will be used.
+    DOM element to contain the cropper. The cropper will be intialized
+    with the width and height of its container if no `width` and
+    `height` is explicitly defined.
 
-  * height: *Optional* Maximum height of the cropper. If not defined, `container.clientHeight` will be used.
+  * width: *Optional*
 
-  * minHeight: *Optional* Minimum height of the cropping rect, default as `5`.
+    Maximum width of the cropper.
+    If not defined, `container.clientWidth` will be used.
 
-  * ratio: *Optional* The `width / height` ratio, default as `1`, `0` stands for unlimited.
+  * height: *Optional*
 
-  * directions: *Optional* An array of resizer directions, default as `['nw', 'ne', 'sw', 'se']`.
+    Maximum height of the cropper.
+    If not defined, `container.clientHeight` will be used.
 
-  * onCrop: *Optional* Function called with `cropData` when cropped image is updated.
+  * minHeight: *Optional*
 
-  * debounce: *Optional* Either `'mouseup'` or the number of time in milliseconds to debounce the `onCrop` call.
+    Minimum height of the cropping rect, default as `5`.
+
+  * ratio: *Optional*
+
+    The `width / height` ratio, default as `1`, `0` stands for unlimited.
+
+  * directions: *Optional*
+
+    An array of resizer directions, default as `['nw', 'ne', 'sw', 'se']`.
+
+  * onCrop: *Optional*
+
+    Function called with `cropData` when cropped image is updated.
+
+  * debounce: *Optional*
+
+    Either `'mouseup'` or the number of time in milliseconds to debounce the `onCrop` call.
