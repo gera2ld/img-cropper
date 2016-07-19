@@ -63,9 +63,8 @@
       var container = options.container;
       maxWidth = options.width || container.clientWidth;
       maxHeight = options.height || container.clientHeight;
-      container.innerHTML = '<div></div>';
+      container.innerHTML = '<div class="cropper cropper-hide"></div>';
       wrap = container.firstChild;
-      wrap.className = 'cropper';
       if (options.className) wrap.className += ' ' + options.className;
       canvasSource = createCanvas();
       canvasMask = createCanvas();
@@ -98,39 +97,45 @@
       if (ratio == null) ratio = 1;
       options.ratio = ratio;
       var data = getRectByRatio({
-        maxWidth: clipWidth,
-        maxHeight: clipHeight,
+        maxWidth: cropWidth,
+        maxHeight: cropHeight,
       }, ratio);
-      clipWidth = data.width;
-      clipHeight = data.height;
+      cropWidth = data.width;
+      cropHeight = data.height;
       updateRect();
     }
     /**
      * @desc Reset cropper by setting an image.
-     * @param image {Image/Blob}
+     * @param {Image/Blob} image
+     * @param {Object} cropRect {x, y, width, height}
      */
-    function reset(image) {
+    function reset(image, cropRect) {
       // Transform image to dataURL to avoid cross-domain issues
-      if (image instanceof Image) {
+      if (!image) {
+        wrap.classList.add('cropper-hide');
+      } else if (image instanceof Image) {
         var canvas = createCanvas(image.width, image.height);
         canvas.getContext('2d').drawImage(image, 0, 0);
-        initCropper(canvas.toDataURL());
+        initCropper(canvas.toDataURL(), cropRect);
       } else if (image instanceof Blob) {
         var reader = new FileReader;
         reader.onload = function (e) {
-          initCropper(e.target.result);
+          initCropper(e.target.result, cropRect);
         };
         reader.readAsDataURL(image);
       } else {
         throw 'Unknown image type!';
       }
     }
-    function initCropper(dataURL) {
+    function initCropper(dataURL, cropRect) {
       image = new Image;
-      image.onload = initCanvas;
+      image.onload = function () {
+        initCanvas(cropRect);
+      };
       image.src = dataURL;
     }
-    function initCanvas() {
+    function initCanvas(cropRect) {
+      wrap.classList.remove('cropper-hide');
       var data = getRectByRatio({
         maxWidth: maxWidth,
         maxHeight: maxHeight,
@@ -155,45 +160,54 @@
       ctx.drawImage(canvasSource, 0, 0);
       ctx.fillStyle = 'rgba(0,0,0,.5)';
       ctx.fillRect(0, 0, fullWidth, fullHeight);
-      data = getRectByRatio({
-        maxWidth: fullWidth,
-        maxHeight: fullHeight,
-      }, options.ratio);
-      clipWidth = data.width;
-      clipHeight = data.height;
-      setRatio(options.ratio);
-      clipX = (fullWidth - clipWidth) >> 1;
-      clipY = (fullHeight - clipHeight) >> 1;
-      updateRect();
+      setRect(cropRect || {});
       events.fire('CANVAS_INIT');
+    }
+    function setRect(rect) {
+      rect = {
+        x: rect.x,
+        y: rect.y,
+        width: rect.width || fullWidth,
+        height: rect.height || fullHeight,
+      };
+      data = getRectByRatio({
+        maxWidth: Math.min(fullWidth, rect.width),
+        maxHeight: Math.min(fullHeight, rect.height),
+      }, options.ratio);
+      cropWidth = data.width;
+      cropHeight = data.height;
+      setRatio(options.ratio);
+      cropX = rect.x == null ? (fullWidth - cropWidth) >> 1 : Math.min(rect.x, fullWidth - cropWidth);
+      cropY = rect.y == null ? (fullHeight - cropHeight) >> 1 : Math.min(rect.y, fullHeight - cropHeight);
+      updateRect();
     }
     function updateRect() {
       setStyles(rect, {
-        left: clipX + 'px',
-        top: clipY + 'px',
-        width: clipWidth + 'px',
-        height: clipHeight + 'px',
+        left: cropX + 'px',
+        top: cropY + 'px',
+        width: cropWidth + 'px',
+        height: cropHeight + 'px',
       });
-      canvasRect.style.left = clipX + 'px';
-      canvasRect.style.top = clipY + 'px';
-      canvasRect.width = clipWidth;
-      canvasRect.height = clipHeight;
+      canvasRect.style.left = cropX + 'px';
+      canvasRect.style.top = cropY + 'px';
+      canvasRect.width = cropWidth;
+      canvasRect.height = cropHeight;
       // Draw from canvasSource to avoid image flashing
-      canvasRect.getContext('2d').drawImage(canvasSource, clipX, clipY, clipWidth, clipHeight, 0, 0, clipWidth, clipHeight);
+      canvasRect.getContext('2d').drawImage(canvasSource, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
       events.fire('UPDATE_RECT');
     }
     function getCropped() {
-      var ratio = clipWidth / clipHeight;
-      var sourceX = ~~ (clipX / fullWidth * image.width);
-      var sourceY = ~~ (clipY / fullHeight * image.height);
+      var ratio = cropWidth / cropHeight;
+      var sourceX = ~~ (cropX / fullWidth * image.width);
+      var sourceY = ~~ (cropY / fullHeight * image.height);
       var sourceWidth, sourceHeight;
-      // calculate the clipped rect by the smaller side
+      // calculate the cropped rect by the smaller side
       // to avoid inaccuracy when image is largely scaled
       if (ratio >= 1) {
-        sourceHeight = ~~ (clipHeight / fullHeight * image.height);
+        sourceHeight = ~~ (cropHeight / fullHeight * image.height);
         sourceWidth = ~~ (sourceHeight * ratio);
       } else {
-        sourceWidth = ~~ (clipWidth / fullWidth * image.width);
+        sourceWidth = ~~ (cropWidth / fullWidth * image.width);
         sourceHeight = ~~ (sourceWidth / ratio);
       }
       canvasClipped.width = sourceWidth;
@@ -206,6 +220,10 @@
       if (onCrop) {
         var canvas;
         onCrop({
+          x: cropX,
+          y: cropY,
+          width: cropWidth,
+          height: cropHeight,
           getCanvas: function () {
             if (!canvas) canvas = getCropped();
             return canvas;
@@ -252,18 +270,18 @@
       var x = min(max(e.clientX - mouseData.x0, 0), fullWidth);
       var y = min(max(e.clientY - mouseData.y0, 0), fullHeight);
       var width, height;
-      if (dirW) width = max(clipX + clipWidth - x, minWidth);
-      else width = max(x - clipX, minWidth);
-      if (dirN) height = max(clipY + clipHeight - y, minHeight);
-      else height = max(y - clipY, minHeight);
+      if (dirW) width = max(cropX + cropWidth - x, minWidth);
+      else width = max(x - cropX, minWidth);
+      if (dirN) height = max(cropY + cropHeight - y, minHeight);
+      else height = max(y - cropY, minHeight);
       var data = getRectByRatio({
         maxWidth: width,
         maxHeight: height,
       }, options.ratio);
-      if (dirW) clipX = clipX + clipWidth - data.width;
-      if (dirN) clipY = clipY + clipHeight - data.height;
-      clipWidth = data.width;
-      clipHeight = data.height;
+      if (dirW) cropX = cropX + cropWidth - data.width;
+      if (dirN) cropY = cropY + cropHeight - data.height;
+      cropWidth = data.width;
+      cropHeight = data.height;
       updateRect();
     }
     function onResizeEnd(e) {
@@ -275,8 +293,8 @@
     function onMoveStart(e) {
       events.fire('MOVE_START');
       mouseData = {
-        x0: e.clientX - clipX,
-        y0: e.clientY - clipY,
+        x0: e.clientX - cropX,
+        y0: e.clientY - cropY,
       };
       document.addEventListener('mousemove', onMove, false);
       document.addEventListener('mouseup', onMoveEnd, false);
@@ -285,11 +303,11 @@
       var x = e.clientX - mouseData.x0;
       var y = e.clientY - mouseData.y0;
       if (x < 0) x = 0;
-      else if (x + clipWidth > fullWidth) x = fullWidth - clipWidth;
+      else if (x + cropWidth > fullWidth) x = fullWidth - cropWidth;
       if (y < 0) y = 0;
-      else if (y + clipHeight > fullHeight) y = fullHeight - clipHeight;
-      clipX = x;
-      clipY = y;
+      else if (y + cropHeight > fullHeight) y = fullHeight - cropHeight;
+      cropX = x;
+      cropY = y;
       updateRect();
     }
     function onMoveEnd(e) {
@@ -347,15 +365,15 @@
      * canvasSource and canvasMask are scaled to fit container size.
      * canvasSource contains the scaled image for repainting in the future.
      * canvasMask contains the scaled the masked image.
-     * canvasRect contains the clipped part of the scaled image, when
+     * canvasRect contains the cropped part of the scaled image, when
      * repainted, canvasSource serves as a source so that there is no extra
      * scaling and thus no image flashing.
-     * canvasClipped contains the clipped part of the original image.
+     * canvasClipped contains the cropped part of the original image.
      */
     var canvasSource, canvasMask, canvasRect, canvasClipped;
     var wrap, rect;
     var options = {};
-    var clipX, clipY, clipWidth, clipHeight;
+    var cropX, cropY, cropWidth, cropHeight;
     var fullWidth, fullHeight, maxWidth, maxHeight;
     var image, mouseData;
     var cancelDebounce;
@@ -365,11 +383,13 @@
       reset: reset,
       setRatio: setRatio,
       setDebounce: setDebounce,
+      setRect: setRect,
     };
   }
 
   var defaultCSS = [
     '.cropper{position:absolute;overflow:visible;}',
+    '.cropper-hide{display:none;}',
     '.cropper-area{position:absolute;}',
     '.cropper-rect{position:absolute;border:1px solid rgba(255,255,255,.5);cursor:move;box-sizing:border-box;}',
     '.cropper-resizer{position:absolute;width:10px;height:10px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.5);box-sizing:border-box;}',

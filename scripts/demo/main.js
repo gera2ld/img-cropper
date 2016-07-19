@@ -10,6 +10,7 @@ const cropper = ImageCropper.create({
     ctx.fillRect(0, 0, 200, 200);
     ctx.drawImage(canvas, 0, 0, 200, 200);
     ratio = canvas.width / canvas.height;
+    $('#pos').innerHTML = `x: ${cropData.x}, y: ${cropData.y}, width: ${cropData.width}, height: ${cropData.height}`;
   },
   ratio,
 });
