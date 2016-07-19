@@ -29,7 +29,7 @@ const cropper = ImageCropper.create({
 
 Documents
 ---
-* *function* ImageCropper.create(*options*)
+* *function* ImageCropper.create(options)
 
   *options* have properties below:
 
@@ -39,32 +39,48 @@ Documents
     with the width and height of its container if no `width` and
     `height` is explicitly defined.
 
-  * width: *Optional*
+  * width *(Optional)*
 
     Maximum width of the cropper.
     If not defined, `container.clientWidth` will be used.
 
-  * height: *Optional*
+  * height *(Optional)*
 
     Maximum height of the cropper.
     If not defined, `container.clientHeight` will be used.
 
-  * minHeight: *Optional*
+  * minHeight *(Optional)*
 
     Minimum height of the cropping rect, default as `5`.
 
-  * ratio: *Optional*
+  * ratio *(Optional)*
 
     The `width / height` ratio, default as `1`, `0` stands for unlimited.
 
-  * directions: *Optional*
+  * directions *(Optional)*
 
     An array of resizer directions, default as `['nw', 'ne', 'sw', 'se']`.
 
-  * onCrop: *Optional*
+  * onCrop *(Optional)*
 
     Function called with `cropData` when cropped image is updated.
 
-  * debounce: *Optional*
+  * debounce *(Optional)*
 
     Either `'mouseup'` or the number of time in milliseconds to debounce the `onCrop` call.
+
+  Returns an object with properties below:
+
+  * *function* reset(images, *(optional)* cropRect)
+
+    `cropRect` can be an object with optional `x, y, width, height` properties.
+
+  * *function* setRatio(ratio)
+
+  * *function* setDebounce(debounce)
+
+    `debounce` is the same as in options.
+
+  * *function* setRect(cropRect)
+
+    Modify the crop rect manually, the same as in `reset`.
