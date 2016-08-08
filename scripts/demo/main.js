@@ -1,10 +1,11 @@
 const $ = selector => document.querySelector(selector);
 const preview = $('#preview');
 var ratio = 1;
+var canvas;
 const cropper = ImageCropper.create({
   container: $('#cropper'),
   onCrop: cropData => {
-    const canvas = cropData.getCanvas();
+    canvas = cropData.getCanvas();
     const ctx = preview.getContext('2d');
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, 200, 200);
@@ -22,4 +23,7 @@ $('#cbRatio').addEventListener('change', e => {
 }, false);
 $('#cbMouseup').addEventListener('change', e => {
   cropper.setDebounce(e.target.checked ? 'mouseup' : 0);
+}, false);
+$('#btOpen').addEventListener('click', e => {
+  window.open(canvas.toDataURL($('#tType').value));
 }, false);

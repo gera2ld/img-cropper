@@ -69,7 +69,7 @@
       canvasSource = createCanvas();
       canvasMask = createCanvas();
       canvasRect = createCanvas();
-      canvasClipped = createCanvas();
+      canvasCropped = createCanvas();
       canvasMask.className = 'cropper-mask';
       canvasRect.className = 'cropper-area';
       rect = document.createElement('div');
@@ -210,10 +210,10 @@
         sourceWidth = ~~ (cropWidth / fullWidth * image.width);
         sourceHeight = ~~ (sourceWidth / ratio);
       }
-      canvasClipped.width = sourceWidth;
-      canvasClipped.height = sourceHeight;
-      canvasClipped.getContext('2d').drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
-      return canvasClipped;
+      canvasCropped.width = sourceWidth;
+      canvasCropped.height = sourceHeight;
+      canvasCropped.getContext('2d').drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+      return canvasCropped;
     }
     function crop() {
       var onCrop = options.onCrop;
@@ -368,9 +368,9 @@
      * canvasRect contains the cropped part of the scaled image, when
      * repainted, canvasSource serves as a source so that there is no extra
      * scaling and thus no image flashing.
-     * canvasClipped contains the cropped part of the original image.
+     * canvasCropped contains the cropped part of the original image.
      */
-    var canvasSource, canvasMask, canvasRect, canvasClipped;
+    var canvasSource, canvasMask, canvasRect, canvasCropped;
     var wrap, rect;
     var options = {};
     var cropX, cropY, cropWidth, cropHeight;
