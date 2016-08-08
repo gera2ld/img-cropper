@@ -205,10 +205,10 @@
       // to avoid inaccuracy when image is largely scaled
       if (ratio >= 1) {
         sourceHeight = ~~ (cropHeight / fullHeight * image.height);
-        sourceWidth = ~~ (sourceHeight * ratio);
+        sourceWidth = Math.min(~~ (sourceHeight * ratio), image.width - sourceX);
       } else {
         sourceWidth = ~~ (cropWidth / fullWidth * image.width);
-        sourceHeight = ~~ (sourceWidth / ratio);
+        sourceHeight = Math.min(~~ (sourceWidth / ratio), image.height - sourceY);
       }
       canvasCropped.width = sourceWidth;
       canvasCropped.height = sourceHeight;
