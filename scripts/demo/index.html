@@ -5,6 +5,10 @@
     <style>
       #cropper{position:relative;width:600px;height:500px;border:1px solid #eee;}
       body>div{margin-bottom:10px;}
+      .cache-list{width:600px;padding:5px;border:1px solid #eee;min-height:100px;}
+      .cache-item{display:inline-block;height:100px;min-width:20px;margin-right:5px;cursor:pointer;}
+      .cache-item>img{max-height:100%;}
+      .cache-item.active{border:1px solid red;}
     </style>
     <script src="index.js"></script>
   </head>
@@ -13,6 +17,7 @@
     <h1>Image Cropper</h1>
     <div><em>The coolest image cropper.</em></div>
     <div id="cropper"></div>
+    <div class="cache-list"></div>
     <div><input type="file"></div>
     <div>Type: <input type="text" id="tType" value="image/png"> <button id="btOpen">Open in new tab</button></div>
     <div><label><input type="checkbox" id="cbRatio" checked>Keep width/height ratio</label></div>
