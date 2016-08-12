@@ -17,6 +17,7 @@ const cropper = ImageCropper.create({
 });
 $('input[type=file]').addEventListener('change', e => {
   cropper.reset(e.target.files[0]);
+  e.target.value = null;
 }, false);
 $('#cbRatio').addEventListener('change', e => {
   cropper.setRatio(e.target.checked ? ratio : 0);
