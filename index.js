@@ -17,6 +17,14 @@
       height: height,
     };
   }
+  function assign(obj) {
+    [].slice.call(arguments, 1).forEach(function (ext) {
+      if (ext) for (var k in ext) {
+        obj[k] = ext[k];
+      }
+    });
+    return obj;
+  }
   function setStyles(el, styles) {
     for (var k in styles) {
       el.style[k] = styles[k];
@@ -46,14 +54,13 @@
     styles.innerHTML = css || defaultCSS;
     document.head.appendChild(styles);
   }
-  function url2blob(url, callback) {
-    var xhr = new XMLHttpRequest;
-    xhr.open('GET', url);
-    xhr.responseType = 'blob';
-    xhr.onload = function () {
-      callback(xhr.response);
-    };
-    xhr.send();
+  function createCanvas(width, height) {
+    // create a canvas and set default width and height as 1px
+    // so that no unexpected scroll bars will appear
+    var canvas = document.createElement('canvas');
+    canvas.width = width || 1;
+    canvas.height = height || 1;
+    return canvas;
   }
   function blob2dataURL(blob, callback) {
     var reader = new FileReader;
@@ -62,20 +69,55 @@
     };
     reader.readAsDataURL(blob);
   }
-
-  function create(_options) {
-    function createCanvas(width, height) {
-      // create a canvas and set default width and height as 1px
-      // so that no unexpected scroll bars will appear
-      var canvas = document.createElement('canvas');
-      canvas.width = width || 1;
-      canvas.height = height || 1;
-      return canvas;
+  function eventEmitter() {
+    function forEachType(typeStr, handle) {
+      typeStr.split(' ').forEach(function (type) {
+        type && handle(type);
+      });
     }
+    function on(type, cb) {
+      forEachType(type, function (type) {
+        var list = callbacks[type];
+        if (!list) list = callbacks[type] = [];
+        list.push(cb);
+      });
+      return function () {
+        off(type, cb);
+      };
+    }
+    function off(type, cb) {
+      forEachType(type, function (type) {
+        var list = callbacks[type];
+        if (list) {
+          if (cb) {
+            var i = list.indexOf(cb);
+            if (~i) list.splice(i, 1);
+          } else {
+            delete callbacks[type];
+          }
+        }
+      });
+    }
+    function fire(type, data) {
+      forEachType(type, function (type) {
+        var list = callbacks[type];
+        list && list.forEach(function (callback) {
+          callback(data, type);
+        });
+      });
+    }
+    var callbacks = {};
+    return {
+      on: on,
+      off: off,
+      fire: fire,
+    };
+  }
+
+  function create(options) {
     function init() {
       styles || initCSS();
-      for (var k in _options) options[k] = _options[k];
-      _options = null;
+      options = assign({}, options);
       var container = options.container;
       maxWidth = options.width || container.clientWidth;
       maxHeight = options.height || container.clientHeight;
@@ -122,37 +164,64 @@
     }
     /**
      * @desc Reset cropper by setting an image.
-     * @param {Image/Blob} image
-     * @param {Object} cropRect {x, y, width, height}
+     * @param {Image/Canvas/Blob/String} source
+     * @param {Optional Object} cropRect
+     *         an object with properties: {x, y, width, height}
+     * @param {Optional Function} callback
+     *         called with an cachable image
      */
-    function reset(image, cropRect) {
-      // Transform image to dataURL to avoid cross-domain issues
-      if (!image) {
+    function reset(source, cropRect, callback) {
+      if (!source) {
         wrap.classList.add('cropper-hide');
-      } else if (image instanceof Image) {
-        var src = image.src;
-        if (/^data:/.test(src)) initCropper(src, cropRect);
-        else {
-          url2blob(src, function (blob) {
-            blob2dataURL(blob, function (url) {
-              initCropper(url, cropRect);
-            });
-          });
+        callback && callback();
+      } else {
+        if (typeof cropRect === 'function') {
+          callback = cropRect;
+          cropRect = null;
         }
-      } else if (image instanceof Blob) {
-        blob2dataURL(image, function (url) {
-          initCropper(url, cropRect);
+        // console.time('init');
+        initImage(source, function (img) {
+          // console.timeEnd('init');
+          image = {
+            el: img,
+            width: img.naturalWidth || img.width,
+            height: img.naturalHeight || img.height,
+          };
+          initCanvas(cropRect);
+          // callback is used for cache
+          callback && callback(img);
         });
+      }
+    }
+    function checkCORS(img) {
+      // console.time('check');
+      var canvas = createCanvas();
+      canvas.getContext('2d').drawImage(img, 0, 0, 1, 1, 0, 0, 1, 1);
+      canvas.toDataURL();
+      // console.timeEnd('check');
+    }
+    function initImage(source, callback) {
+      if (source instanceof HTMLElement && ~['img', 'canvas'].indexOf(source.tagName.toLowerCase())) {
+        // Type <img> or <canvas>
+        // HTMLElement is used for cache and should not be changed
+        checkCORS(source);
+        callback(source);
+      } else if (source instanceof Blob) {
+        // Type Blob
+        blob2dataURL(source, function (url) {
+          initImage(url, callback);
+        });
+      } else if (typeof source === 'string') {
+        // Type String
+        // URL of image
+        var image = new Image;
+        image.onload = function () {
+          callback(image);
+        };
+        image.src = source;
       } else {
         throw 'Unknown image type!';
       }
-    }
-    function initCropper(dataURL, cropRect) {
-      image = new Image;
-      image.onload = function () {
-        initCanvas(cropRect);
-      };
-      image.src = dataURL;
     }
     function initCanvas(cropRect) {
       wrap.classList.remove('cropper-hide');
@@ -169,13 +238,15 @@
         left: ((maxWidth - fullWidth) >> 1) + 'px',
       });
       var ctx;
+      // console.time('canvasSource');
       canvasSource.width = canvasMask.width = fullWidth;
       canvasSource.height = canvasMask.height = fullHeight;
       ctx = canvasSource.getContext('2d');
       // In case image has transparent pixels
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, fullWidth, fullHeight);
-      ctx.drawImage(image, 0, 0, fullWidth, fullHeight);
+      ctx.drawImage(image.el, 0, 0, fullWidth, fullHeight);
+      // console.timeEnd('canvasSource');
       ctx = canvasMask.getContext('2d');
       ctx.drawImage(canvasSource, 0, 0);
       ctx.fillStyle = 'rgba(0,0,0,.5)';
@@ -190,7 +261,7 @@
         width: rect.width || fullWidth,
         height: rect.height || fullHeight,
       };
-      data = getRectByRatio({
+      var data = getRectByRatio({
         maxWidth: Math.min(fullWidth, rect.width),
         maxHeight: Math.min(fullHeight, rect.height),
       }, options.ratio);
@@ -232,7 +303,7 @@
       }
       canvasCropped.width = sourceWidth;
       canvasCropped.height = sourceHeight;
-      canvasCropped.getContext('2d').drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+      canvasCropped.getContext('2d').drawImage(image.el, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
       return canvasCropped;
     }
     function crop() {
@@ -336,50 +407,6 @@
       events.fire('MOVE_END');
       onCropEnd(e);
     }
-    var events = function () {
-      function forEachType(typeStr, handle) {
-        typeStr.split(' ').forEach(function (type) {
-          type && handle(type);
-        });
-      }
-      function on(type, cb) {
-        forEachType(type, function (type) {
-          var list = callbacks[type];
-          if (!list) list = callbacks[type] = [];
-          list.push(cb);
-        });
-        return function () {
-          off(type, cb);
-        };
-      }
-      function off(type, cb) {
-        forEachType(type, function (type) {
-          var list = callbacks[type];
-          if (list) {
-            if (cb) {
-              var i = list.indexOf(cb);
-              if (~i) list.splice(i, 1);
-            } else {
-              delete callbacks[type];
-            }
-          }
-        });
-      }
-      function fire(type, data) {
-        forEachType(type, function (type) {
-          var list = callbacks[type];
-          list && list.forEach(function (callback) {
-            callback(data, type);
-          });
-        });
-      }
-      var callbacks = {};
-      return {
-        on: on,
-        off: off,
-        fire: fire,
-      };
-    }();
 
     /**
      * canvasSource and canvasMask are scaled to fit container size.
@@ -392,11 +419,11 @@
      */
     var canvasSource, canvasMask, canvasRect, canvasCropped;
     var wrap, rect;
-    var options = {};
     var cropX, cropY, cropWidth, cropHeight;
     var fullWidth, fullHeight, maxWidth, maxHeight;
     var image, mouseData;
     var cancelDebounce;
+    var events = eventEmitter();
 
     init();
     return {

@@ -71,9 +71,13 @@ Documents
 
   Returns an object with properties below:
 
-  * *function* reset(images, *(optional)* cropRect)
+  * *function* reset(sourceImage, *(optional)* cropRect, *(optional)* callback)
+
+    `sourceImage` can be <img>, <canvas>, Blob or URL string.
 
     `cropRect` can be an object with optional `x, y, width, height` properties.
+
+    `callback` will be called with a cachable <img> if specified.
 
   * *function* setRatio(ratio)
 
