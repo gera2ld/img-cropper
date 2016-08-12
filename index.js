@@ -46,6 +46,22 @@
     styles.innerHTML = css || defaultCSS;
     document.head.appendChild(styles);
   }
+  function url2blob(url, callback) {
+    var xhr = new XMLHttpRequest;
+    xhr.open('GET', url);
+    xhr.responseType = 'blob';
+    xhr.onload = function () {
+      callback(xhr.response);
+    };
+    xhr.send();
+  }
+  function blob2dataURL(blob, callback) {
+    var reader = new FileReader;
+    reader.onload = function (e) {
+      callback(e.target.result);
+    };
+    reader.readAsDataURL(blob);
+  }
 
   function create(_options) {
     function createCanvas(width, height) {
@@ -114,15 +130,19 @@
       if (!image) {
         wrap.classList.add('cropper-hide');
       } else if (image instanceof Image) {
-        var canvas = createCanvas(image.width, image.height);
-        canvas.getContext('2d').drawImage(image, 0, 0);
-        initCropper(canvas.toDataURL(), cropRect);
+        var src = image.src;
+        if (/^data:/.test(src)) initCropper(src, cropRect);
+        else {
+          url2blob(src, function (blob) {
+            blob2dataURL(blob, function (url) {
+              initCropper(url, cropRect);
+            });
+          });
+        }
       } else if (image instanceof Blob) {
-        var reader = new FileReader;
-        reader.onload = function (e) {
-          initCropper(e.target.result, cropRect);
-        };
-        reader.readAsDataURL(image);
+        blob2dataURL(image, function (url) {
+          initCropper(url, cropRect);
+        });
       } else {
         throw 'Unknown image type!';
       }

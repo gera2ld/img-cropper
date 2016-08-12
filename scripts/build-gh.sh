@@ -1,7 +1,7 @@
 DIST=dist-demo
 rm -rf $DIST
 cp -R scripts/demo $DIST
-ln -s ../index.js $DIST
+cp index.js $DIST
 cd $DIST
 git init
 git add -A
